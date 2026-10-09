@@ -15,8 +15,9 @@ What it does:
 - **profile** – that profile parsed into something to work with: short stable
   keys (`hot_air`, `power_state`), enum names, the options a program takes with
   their ranges, and resolution of whatever a person typed to the right program.
-- **protocol** – the local session to one appliance: a TLS-PSK websocket with
-  the appliance's key, request/reply by message id, value and program events.
+- **protocol** – the local session to one appliance: request/reply by message
+  id, value and program events, reconnects. **transport** opens its socket:
+  TLS-PSK with the appliance's key, or AES on port 80 for newer appliances.
 - **appliance** – operations on an appliance: start a program by name, key or
   favourite with checked options, stop/pause/resume, change a setting, list
   programs, and keep the reported state up to date (favourite slots included).
@@ -26,17 +27,20 @@ that is what a bridge or an integration on top of this package does.
 
 ## Status
 
-0.1: what runs a Siemens oven in one household since mid 2026, extracted into
-a package. Honest limits:
+0.2: what runs a Siemens oven in one household since mid 2026, extracted into
+a package, with both transports the appliances use:
 
-- **TLS-PSK only.** Older appliances use TLS-PSK on port 443; newer ones use
-  AES-CBC with HMAC-SHA256 on port 80. The `aes` key type is declared and not
-  implemented yet; a tester with such an appliance is wanted.
-- **The TLS-PSK socket runs in a small Node subprocess** (`bridge/psk-bridge.mjs`),
-  because the package also runs under Bun, where TLS-PSK is not available.
-  Opening it in-process on Node is planned.
-- Tested against one oven's profile; other appliance types may expose shapes
-  the profile parser has not seen.
+- **TLS-PSK** (older appliances, port 443): opened in-process on Node. Under
+  Bun, where TLS-PSK is not available, the same socket is opened by a small
+  Node subprocess (`bridge/psk-bridge.mjs`); the choice is automatic.
+- **AES-CBC with chained HMAC-SHA256** (newer appliances, port 80): the
+  framing follows hcpy and ioBroker.cloudless-homeconnect and is tested
+  against itself in both roles, but no appliance of that kind has been on the
+  other end yet. A tester with one is wanted; `keyType: "aes"` with the
+  appliance's `iv` from `fetchAppliances` is all it should take.
+
+Tested against one oven's profile; other appliance types may expose shapes
+the profile parser has not seen.
 
 ## Install
 
@@ -71,7 +75,7 @@ Talk to an appliance:
 import { HomeConnectDevice, startProgram, applyStateUpdates, applyProgramUpdate, listPrograms } from "homeconnect-local";
 
 const config = configs[0];
-const device = new HomeConnectDevice({ host: config.host, ip: "192.168.1.50", key: config.key, keyType: config.keyType });
+const device = new HomeConnectDevice({ host: config.host, ip: "192.168.1.50", key: config.key, keyType: config.keyType, iv: config.iv });
 const app = { config: { name: config.name, profile: config.profile }, device, state: {}, favorites: new Map() };
 
 device.on("state", (updates) => { const { changed } = applyStateUpdates(app, updates); console.log(changed, app.state); });

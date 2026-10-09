@@ -1,23 +1,26 @@
 /**
  * Home Connect Local Protocol
  *
- * Connects to Home Connect appliances via TLS-PSK WebSocket.
- * Uses a Node.js subprocess for the TLS-PSK connection (Bun's tls
- * data events are broken). Communication via stdin/stdout JSON lines.
- *
- * A request's reply carries the request's msgID; `request()` waits for it
- * so a caller learns whether the appliance accepted a program or a value.
+ * The session to one appliance over its local websocket (transport.ts
+ * decides how that socket is opened). A request's reply carries the
+ * request's msgID; `request()` waits for it so a caller learns whether the
+ * appliance accepted a program or a value.
  */
 
 import { EventEmitter } from "node:events";
-import { spawn, type ChildProcess } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { chooseTransport, createTransport, type Transport, type TransportKind } from "./transport.ts";
 
 export interface DeviceConfig {
   host: string;
   ip: string;
   key: string;
   keyType: "tls" | "aes";
+  /** The appliance's iv; with an AES key. */
+  iv?: string;
+  /** Which connection to open; by default what the key type and the runtime call for. */
+  transport?: TransportKind;
+  /** The appliance's port, when not 443 (psk) or 80 (aes). */
+  port?: number;
 }
 
 export interface HCMessage {
@@ -46,7 +49,7 @@ export interface ProgramUpdate {
 export const REQUEST_TIMEOUT_MS = 5000;
 
 export class HomeConnectDevice extends EventEmitter {
-  private proc: ChildProcess | null = null;
+  private transport: Transport | null = null;
   private config: DeviceConfig;
   private sessionId = 0;
   private txMsgId = 0;
@@ -55,11 +58,13 @@ export class HomeConnectDevice extends EventEmitter {
   private isConnected = false;
   private pollIntervalMs: number;
   private pending = new Map<number, { resolve: (m: HCMessage | null) => void; timer: ReturnType<typeof setTimeout> }>();
+  private reconnectDelayMs: number;
 
-  constructor(config: DeviceConfig, pollIntervalMs = 60_000) {
+  constructor(config: DeviceConfig, pollIntervalMs = 60_000, reconnectDelayMs = 10_000) {
     super();
     this.config = config;
     this.pollIntervalMs = pollIntervalMs;
+    this.reconnectDelayMs = reconnectDelayMs;
   }
 
   /** The session is up: initial values exchanged, requests possible. */
@@ -68,47 +73,19 @@ export class HomeConnectDevice extends EventEmitter {
   }
 
   async connect(): Promise<void> {
-    const host = this.config.ip || this.config.host;
-    const bridgePath = fileURLToPath(new URL("../bridge/psk-bridge.mjs", import.meta.url));
-
-    this.proc = spawn("node", [bridgePath, host, this.config.key], {
-      stdio: ["pipe", "pipe", "pipe"],
+    const kind = this.config.transport ?? chooseTransport(this.config.keyType);
+    const transport = createTransport(kind, { host: this.config.ip || this.config.host, key: this.config.key, iv: this.config.iv, port: this.config.port });
+    this.transport = transport;
+    transport.on("open", () => this.emit("log", `WebSocket connected (${kind})`));
+    transport.on("message", (text: string) => this.handleMessage(Buffer.from(text)));
+    transport.on("close", (code: number, reason: string) => {
+      this.emit("log", `WebSocket closed: ${code} ${reason}`);
+      if (this.transport !== transport) return; // closed by disconnect(), or replaced
+      this.dropSession();
+      this.scheduleReconnect();
     });
-
-    let buf = "";
-    this.proc.stdout!.on("data", (chunk: Buffer) => {
-      buf += chunk.toString();
-      const lines = buf.split("\n");
-      buf = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const event = JSON.parse(line);
-          if (event.type === "open") {
-            this.emit("log", "WebSocket connected (via Node bridge)");
-          } else if (event.type === "message") {
-            this.handleMessage(Buffer.from(event.data));
-          } else if (event.type === "close") {
-            this.emit("log", `WebSocket closed: ${event.code} ${event.reason}`);
-            this.dropSession();
-            this.scheduleReconnect();
-          } else if (event.type === "error") {
-            this.emit("log", `WebSocket error: ${event.message}`);
-          }
-        } catch {}
-      }
-    });
-
-    this.proc.stderr!.on("data", (chunk: Buffer) => {
-      this.emit("log", `Bridge: ${chunk.toString().trim()}`);
-    });
-
-    this.proc.on("exit", () => {
-      if (this.isConnected) {
-        this.dropSession();
-        this.scheduleReconnect();
-      }
-    });
+    transport.on("error", (err: Error) => this.emit("log", `WebSocket error: ${err.message}`));
+    transport.connect();
   }
 
   disconnect(): void {
@@ -117,18 +94,16 @@ export class HomeConnectDevice extends EventEmitter {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    if (this.proc) {
-      this.proc.stdin!.end();
-      this.proc.kill();
-      this.proc = null;
-    }
+    const transport = this.transport;
+    this.transport = null;
+    transport?.close();
     this.dropSession();
   }
 
   /** Send a request and wait for the appliance's reply; null when none came within the timeout. */
   request(resource: string, version = 1, action = "GET", data?: any[], timeoutMs = REQUEST_TIMEOUT_MS): Promise<HCMessage | null> {
-    if (!this.proc?.stdin?.writable) {
-      this.emit("log", "Cannot send — bridge not ready");
+    if (!this.transport?.open) {
+      this.emit("log", "Cannot send — not connected");
       return Promise.resolve(null);
     }
     const msgID = this.txMsgId++;
@@ -264,11 +239,7 @@ export class HomeConnectDevice extends EventEmitter {
   }
 
   private sendRaw(msg: HCMessage): void {
-    if (!this.proc?.stdin?.writable) {
-      this.emit("log", "Cannot send — bridge not ready");
-      return;
-    }
-    this.proc.stdin.write(JSON.stringify(msg) + "\n");
+    if (!this.transport?.send(JSON.stringify(msg))) this.emit("log", "Cannot send — not connected");
   }
 
   private dropSession(): void {
@@ -297,13 +268,13 @@ export class HomeConnectDevice extends EventEmitter {
 
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return;
-    this.emit("log", "Reconnecting in 10s...");
+    this.emit("log", `Reconnecting in ${Math.round(this.reconnectDelayMs / 1000)}s...`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect().catch((err) => {
         this.emit("log", `Reconnect failed: ${err.message}`);
         this.scheduleReconnect();
       });
-    }, 10_000);
+    }, this.reconnectDelayMs);
   }
 }

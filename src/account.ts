@@ -16,6 +16,8 @@ export interface ApplianceConfig {
   host: string;
   key: string;
   keyType: "tls" | "aes";
+  /** The appliance's iv; AES appliances only. */
+  iv?: string;
   profile: Profile;
 }
 
@@ -199,6 +201,7 @@ export async function fetchAppliances(
       host: `${brand}-${type}-${id}`,
       key,
       keyType: enc.tls?.key ? "tls" : "aes",
+      ...(enc.tls?.key ? {} : { iv: enc.aes?.iv }),
       profile,
     });
   }

@@ -3,14 +3,14 @@
  * Node.js bridge for TLS-PSK WebSocket connections.
  * Spawned by the homeconnect automation because Bun's tls data events are broken.
  *
- * Args: host key (base64url)
+ * Args: host key [port]
  * Stdin: JSON lines to send as WebSocket text frames
  * Stdout: JSON lines with {type, data/code/reason/message}
  */
 
 import WebSocket from "ws";
 
-const [,, host, key] = process.argv;
+const [,, host, key, port = "443"] = process.argv;
 if (!host || !key) {
   process.stdout.write(JSON.stringify({ type: "error", message: "Usage: node psk-bridge.mjs <host> <key>" }) + "\n");
   process.exit(1);
@@ -18,7 +18,7 @@ if (!host || !key) {
 
 const pskBuffer = Buffer.from(key + "==", "base64url");
 
-const ws = new WebSocket(`wss://${host}:443/homeconnect`, {
+const ws = new WebSocket(`wss://${host}:${port}/homeconnect`, {
   rejectUnauthorized: false,
   ciphers: "ECDHE-PSK-CHACHA20-POLY1305",
   minVersion: "TLSv1.2",
