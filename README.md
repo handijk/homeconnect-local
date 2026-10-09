@@ -91,6 +91,13 @@ own answer when it refuses.
 The appliance's IP is yours to find (mDNS, your router, or a fixed address);
 the package does not do discovery.
 
+## Releases
+
+A version is a tag `v<version>` on `main`; GitHub Actions runs the tests and
+publishes it to npm through npm's trusted publishing, with a provenance
+statement. `npm audit signatures` in a project that depends on this package
+verifies that what was installed is what that workflow built.
+
 ## Credits
 
 The protocol, the profile format and the login were worked out by the authors
