@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<featureMappingFile>
+  <featureDescription>
+    <feature refUID="0100">BSH.Common.Root.ActiveProgram</feature>
+    <feature refUID="0101">BSH.Common.Root.SelectedProgram</feature>
+    <feature refUID="0228">BSH.Common.Status.OperationState</feature>
+    <feature refUID="0205">BSH.Common.Status.RemoteControlStartAllowed</feature>
+    <feature refUID="020F">BSH.Common.Status.DoorState</feature>
+    <feature refUID="17C3">Cooking.Oven.Status.Cavity.001.OperationState</feature>
+    <feature refUID="17C4">Cooking.Oven.Status.Cavity.001.CurrentTemperature</feature>
+    <feature refUID="17C0">Cooking.Oven.Status.Cavity.001.ActiveProgram</feature>
+    <feature refUID="021B">BSH.Common.Setting.PowerState</feature>
+    <feature refUID="020C">BSH.Common.Setting.ChildLock</feature>
+    <feature refUID="8039">BSH.Common.Setting.Favorite.001.Name</feature>
+    <feature refUID="803A">BSH.Common.Setting.Favorite.001.Program</feature>
+    <feature refUID="8038">BSH.Common.Setting.Favorite.001.Functionality</feature>
+    <feature refUID="000F">BSH.Common.Setting.RemoteControlLevel</feature>
+    <feature refUID="0015">BSH.Common.Event.ProgramFinished</feature>
+    <feature refUID="0200">BSH.Common.Command.AbortProgram</feature>
+    <feature refUID="0219">BSH.Common.Command.PauseProgram</feature>
+    <feature refUID="0222">BSH.Common.Command.ResumeProgram</feature>
+    <feature refUID="1400">Cooking.Oven.Option.SetpointTemperature</feature>
+    <feature refUID="0224">BSH.Common.Option.Duration</feature>
+    <feature refUID="1403">Cooking.Oven.Option.FastPreHeat</feature>
+    <feature refUID="022E">BSH.Common.Option.StartInRelative</feature>
+    <feature refUID="1405">Cooking.Oven.Option.SteamAssistLevel</feature>
+    <feature refUID="0220">BSH.Common.Option.RemainingProgramTime</feature>
+    <feature refUID="2010">Cooking.Oven.Program.HeatingMode.HotAir</feature>
+    <feature refUID="2025">Cooking.Oven.Program.HeatingMode.KeepWarm</feature>
+    <feature refUID="2804">Cooking.Oven.Program.SubsequentMode.KeepWarm</feature>
+    <feature refUID="325D">Cooking.Oven.Program.Dish.Recommendation.FullSteam.BeetrootWholeSteam</feature>
+    <feature refUID="803C">BSH.Common.Program.Favorite.001</feature>
+    <feature refUID="2500">Cooking.Oven.ProgramGroup.Dishes</feature>
+    <feature refUID="0802">Cooking.Oven.Status.Cavity.001.Duration</feature>
+  </featureDescription>
+  <errorDescription>
+    <error refEID="0001">BSH.Common.Error.Unknown</error>
+  </errorDescription>
+  <enumDescriptionList>
+    <enumDescription refENID="0001" enumKey="BSH.Common.EnumType.EventPresentState">
+      <enumMember refValue="0">Off</enumMember>
+      <enumMember refValue="1">Present</enumMember>
+      <enumMember refValue="2">Confirmed</enumMember>
+    </enumDescription>
+    <enumDescription refENID="0002" enumKey="BSH.Common.EnumType.OperationState">
+      <enumMember refValue="0">Inactive</enumMember>
+      <enumMember refValue="1">Ready</enumMember>
+      <enumMember refValue="2">DelayedStart</enumMember>
+      <enumMember refValue="3">Run</enumMember>
+      <enumMember refValue="4">Pause</enumMember>
+      <enumMember refValue="5">ActionRequired</enumMember>
+      <enumMember refValue="6">Finished</enumMember>
+      <enumMember refValue="7">Error</enumMember>
+      <enumMember refValue="8">Aborting</enumMember>
+    </enumDescription>
+    <enumDescription refENID="0003" enumKey="BSH.Common.EnumType.DoorState">
+      <enumMember refValue="0">Open</enumMember>
+      <enumMember refValue="1">Closed</enumMember>
+    </enumDescription>
+    <enumDescription refENID="0004" enumKey="BSH.Common.EnumType.PowerState">
+      <enumMember refValue="1">Off</enumMember>
+      <enumMember refValue="2">On</enumMember>
+      <enumMember refValue="3">Standby</enumMember>
+    </enumDescription>
+    <enumDescription refENID="0005" enumKey="Cooking.Oven.EnumType.SteamAssistLevel">
+      <enumMember refValue="0">Off</enumMember>
+      <enumMember refValue="1">Low</enumMember>
+      <enumMember refValue="2">Medium</enumMember>
+      <enumMember refValue="3">High</enumMember>
+    </enumDescription>
+  </enumDescriptionList>
+</featureMappingFile>

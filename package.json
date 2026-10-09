@@ -1,0 +1,31 @@
+{
+  "name": "homeconnect-local",
+  "version": "0.1.0",
+  "description": "Home Connect appliances (Bosch, Siemens, Neff, Gaggenau, …) over their local protocol: account login and profile download, the local session, and operations on an appliance",
+  "license": "MIT",
+  "author": "handijk",
+  "repository": { "type": "git", "url": "git+https://github.com/handijk/homeconnect-local.git" },
+  "homepage": "https://github.com/handijk/homeconnect-local#readme",
+  "bugs": { "url": "https://github.com/handijk/homeconnect-local/issues" },
+  "keywords": ["home-connect", "homeconnect", "bosch", "siemens", "neff", "gaggenau", "local", "websocket", "smart-home", "iot"],
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "bridge", "README.md", "LICENSE"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-strip-types --test \"test/*.test.ts\"",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.11.2",
+    "fflate": "^0.8.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/ws": "^8.18.0",
+    "typescript": "^7.0.0"
+  }
+}

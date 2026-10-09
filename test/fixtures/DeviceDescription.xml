@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A cut-down oven profile in the shape Home Connect hands out: the uids are the real ones of the Siemens oven. -->
+<device>
+  <description>
+    <type>Oven</type>
+    <brand>SIEMENS</brand>
+    <model>HS958GED1</model>
+    <version>3</version>
+    <revision>0</revision>
+    <pairableDeviceTypes>
+      <deviceType>Application</deviceType>
+    </pairableDeviceTypes>
+  </description>
+  <statusList access="read" available="true" uid="0300">
+    <status access="read" available="true" enumerationType="0002" refCID="03" refDID="80" uid="0228" />
+    <status access="read" available="true" refCID="01" refDID="00" uid="0205" />
+    <status access="read" available="true" enumerationType="0003" refCID="03" refDID="80" uid="020F" />
+    <statusList access="read" available="true" uid="0301">
+      <status access="read" available="true" enumerationType="0002" refCID="03" refDID="80" uid="17C3" />
+      <status access="read" available="true" refCID="07" refDID="A4" uid="17C4" />
+      <status access="read" available="true" refCID="03" refDID="80" uid="17C0" />
+    </statusList>
+  </statusList>
+  <settingList access="readWrite" available="true" uid="0302">
+    <setting access="readWrite" available="true" enumerationType="0006" refCID="03" refDID="80" uid="021B" />
+    <setting access="readWrite" available="true" refCID="01" refDID="00" uid="020C" />
+    <setting access="readWrite" available="true" refCID="02" refDID="00" uid="8039" />
+    <setting access="readWrite" available="true" refCID="03" refDID="80" uid="803A" />
+    <setting access="readWrite" available="true" refCID="03" refDID="80" uid="8038" />
+    <setting access="read" available="true" refCID="03" refDID="80" uid="000F" />
+  </settingList>
+  <eventList uid="0303">
+    <event enumerationType="0001" handling="acknowledge" level="hint" refCID="03" refDID="80" uid="0015" />
+  </eventList>
+  <commandList access="writeOnly" available="true" uid="0304">
+    <command access="writeOnly" available="true" refCID="01" refDID="00" uid="0200" />
+    <command access="writeOnly" available="true" refCID="01" refDID="00" uid="0219" />
+    <command access="writeOnly" available="true" refCID="01" refDID="00" uid="0222" />
+  </commandList>
+  <optionList access="readWrite" available="true" uid="0305">
+    <option access="readWrite" available="true" refCID="07" refDID="A4" uid="1400" min="30" max="300" stepSize="5" default="160" />
+    <option access="readWrite" available="true" refCID="10" refDID="82" uid="0224" min="0" max="86340" stepSize="60" />
+    <option access="readWrite" available="true" refCID="01" refDID="00" uid="1403" />
+    <option access="readWrite" available="true" refCID="10" refDID="82" uid="022E" min="0" max="86340" stepSize="60" />
+    <option access="readWrite" available="true" enumerationType="0005" refCID="03" refDID="80" uid="1405" />
+    <option access="read" available="true" refCID="10" refDID="82" uid="0220" />
+  </optionList>
+  <programGroup available="true" uid="2400">
+    <program available="true" execution="selectAndStart" uid="2010">
+      <option access="readWrite" available="true" liveUpdate="true" default="160" refUID="1400" />
+      <option access="readWrite" available="true" liveUpdate="true" refUID="0224" />
+      <option access="readWrite" available="true" liveUpdate="false" default="false" refUID="1403" />
+      <option access="read" available="true" liveUpdate="true" refUID="0220" />
+    </program>
+    <program available="true" execution="selectAndStart" uid="2025">
+      <option access="readWrite" available="true" liveUpdate="true" refUID="0224" />
+    </program>
+    <programGroup available="true" uid="2401">
+      <program available="true" execution="selectAndStart" uid="2804">
+        <option access="readWrite" available="true" liveUpdate="true" refUID="0224" />
+      </program>
+    </programGroup>
+    <programGroup available="true" uid="2500">
+      <program available="true" execution="selectAndStart" uid="325D">
+        <option access="readWrite" available="true" liveUpdate="true" refUID="1405" />
+        <option access="readWrite" available="true" liveUpdate="true" refUID="022E" />
+      </program>
+    </programGroup>
+    <program available="true" execution="selectAndStart" uid="803C" />
+  </programGroup>
+  <activeProgram access="readWrite" validate="true" uid="0100" />
+  <selectedProgram access="readWrite" fullOptionSet="false" uid="0101" />
+  <enumerationTypeList>
+    <enumerationType enid="0004">
+      <enumeration value="1" />
+      <enumeration value="2" />
+      <enumeration value="3" />
+    </enumerationType>
+    <enumerationType enid="0006" subsetOf="0004">
+      <enumeration value="2" />
+      <enumeration value="3" />
+    </enumerationType>
+  </enumerationTypeList>
+</device>
