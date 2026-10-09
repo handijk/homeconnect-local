@@ -40,6 +40,8 @@ export interface Feature {
   default?: string;
   /** Enum value → name, e.g. {"2": "On", "3": "Standby"} */
   values?: Record<string, string>;
+  /** The enum type's full key, e.g. BSH.Common.EnumType.PowerState (the cloud's values are `${enumType}.${name}`) */
+  enumType?: string;
   /** Programs: selectOnly / selectAndStart / startOnly */
   execution?: string;
   /** Programs: the options this program takes */
@@ -117,6 +119,7 @@ export function parseProfile(deviceDescription: string, featureMapping: string):
   // FeatureMapping: names and enums
   const names = new Map<number, string>();
   const enums = new Map<number, Record<string, string>>();
+  const enumKeys = new Map<number, string>();
   let currentEnum: Record<string, string> | null = null;
   walk(featureMapping, (tag) => {
     if (tag.name === "feature" && tag.attrs.refUID) {
@@ -124,6 +127,7 @@ export function parseProfile(deviceDescription: string, featureMapping: string):
     } else if (tag.name === "enumDescription" && tag.attrs.refENID) {
       currentEnum = {};
       enums.set(parseInt(tag.attrs.refENID, 16), currentEnum);
+      if (tag.attrs.enumKey) enumKeys.set(parseInt(tag.attrs.refENID, 16), tag.attrs.enumKey);
     } else if (tag.name === "enumMember" && currentEnum && tag.attrs.refValue !== undefined) {
       currentEnum[String(parseInt(tag.attrs.refValue))] = tag.text;
     }
@@ -162,6 +166,14 @@ export function parseProfile(deviceDescription: string, featureMapping: string):
     if ((tag.name === "activeProgram" || tag.name === "selectedProgram") && tag.attrs.fullOptionSet === "true") fullOptionSet = true;
   });
 
+  // A subset enumeration type (PowerState with On and Standby only) is still its parent's type.
+  const resolveEnumKey = (enid: number, depth = 0): string | undefined => {
+    const direct = enumKeys.get(enid);
+    if (direct) return direct;
+    const sub = subsets.get(enid);
+    if (!sub || sub.of === undefined || depth > 4) return undefined;
+    return resolveEnumKey(sub.of, depth + 1);
+  };
   const resolveEnum = (enid: number, depth = 0): Record<string, string> | undefined => {
     const direct = enums.get(enid);
     if (direct) return direct;
@@ -190,8 +202,13 @@ export function parseProfile(deviceDescription: string, featureMapping: string):
     if (e.attrs.default !== undefined) f.default = e.attrs.default;
     if (e.attrs.execution) f.execution = e.attrs.execution;
     if (e.attrs.enumerationType) {
-      const values = resolveEnum(parseInt(e.attrs.enumerationType, 16));
-      if (values && Object.keys(values).length) f.values = values;
+      const enid = parseInt(e.attrs.enumerationType, 16);
+      const values = resolveEnum(enid);
+      if (values && Object.keys(values).length) {
+        f.values = values;
+        const enumType = resolveEnumKey(enid);
+        if (enumType) f.enumType = enumType;
+      }
     }
     if (e.el === "program") f.options = e.options;
     features[String(e.uid)] = f;

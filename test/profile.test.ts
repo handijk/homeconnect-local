@@ -55,6 +55,7 @@ test("the appliance profile: keys, kinds, enums, options, resolution, encoding, 
   same("event enum", f(21).values?.["1"], "Present");
   same("steam level enum", f(5125).values?.["3"], "High");
   same("execution", f(8208).execution, "selectAndStart");
+  same("enum type, also for a subset", [f(552).enumType, f(539).enumType, f(21).enumType], ["BSH.Common.EnumType.OperationState", "BSH.Common.EnumType.PowerState", "BSH.Common.EnumType.EventPresentState"]);
 
   // A program's options, nested in the description
   same("hot_air options", f(8208).options, [
